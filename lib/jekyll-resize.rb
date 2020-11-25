@@ -7,33 +7,34 @@ module Jekyll
       site = @context.registers[:site]
 
       source_path = site.source + source
+      # What is _[]?
       raise "#{source_[path]} is not readable" unless File.readable?(source_path)
-
-      destination_path = "/cache/resize/"
-      destination = site.source + destination_path
-
-      FileUtils.mkdir_p destination
-
-      ext = File.extname(source)
+    
+      # TODO: move to constants.
+      dest_subpath = "/cache/resize/"
+      dest_dir = site.source + dest_subpath
+      FileUtils.mkdir_p dest_dir
+      
+      # TODO: move to func
       desc = options.gsub(/[^\da-z]+/i, '')
-
       sha = Digest::SHA256.file source_path
-
-      destination_file_name = "#{sha}_#{desc}#{ext}"
-      destination += destination_file_name
-
-      if !File.exist?(destination) || File.mtime(destination) <= File.mtime(source_path)
-
-        puts "Thumbnailing #{source_path} to #{destination} (#{options})"
+      ext = File.extname(source)
+      file_name = "#{sha}_#{desc}#{ext}"
+      
+      dest_path = dest_dir + file_name
+      
+      # TODO: move to func
+      if !File.exist?(dest_path) || (File.mtime(dest_path) <= File.mtime(source_path))
+        puts "Thumbnailing #{source_path} to #{dest_path} (#{options})"
 
         image = MiniMagick::Image.open(source_path)
         image.strip
         image.resize options
-        image.write destination
-        site.static_files << Jekyll::StaticFile.new(site, site.source, destination_path, destination_file_name)
+        image.write dest_path
+        site.static_files << Jekyll::StaticFile.new(site, site.source, dest_subpath, file_name)
       end
 
-      destination_path + destination_file_name
+      dest_subpath + file_name
     end
   end
 end
